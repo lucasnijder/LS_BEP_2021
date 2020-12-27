@@ -54,15 +54,15 @@ run_simulation <- function(sim_param_combs, variance_of_comps, nrFolds){
   set.seed(num_mc)
   
   # generate the simulation data
-  res_var <- makeVariance(varianceOfComps=variance_of_comps, p=p, error=e)
-  X <- makeDat(n=n, p=p, ncomp=c, variances=res_var)$X
+  res_var <- makeVariance(varianceOfComps = variance_of_comps, p = p, error = e)
+  X <- makeDat(n = n, p = p, ncomp = c, variances = res_var)$X
   
   # run the component selection techniques
   final_res <- RUN_PC_SELECT(dat = X, nrFolds = nrFolds)
   
   # extract the results for eigenvector cross-validation for both PCA and SPCA
-  res_comp_pca <- final_res$PCA_CV[[2]]
-  res_comp_spca <- final_res$SPCA_CV[[2]]
+  res_comp_pca <- final_res$PCA_CV
+  res_comp_spca <- final_res$SPCA_CV
   
   # return a list containing the results
   return(c(num_mc = num_mc,
