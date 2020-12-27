@@ -27,7 +27,7 @@ extract_num_comps <- function(folds_comp_errors, type, dat){
 EV_PRESS_per_component <- function(c, res_loadings, train_dat, test_dat){
   
   # W represents the loadings of the (S)PCA model
-  W <- matrix(res_loadings[,1:c], nrow = ncol(train_dat), ncol = c)
+  W <- matrix(res_loadings[,1:c], nrow = ncol(train_dat), ncol = c) # removed 1:
   
   # apply SVD to get P
   Xt_X_W <- t(train_dat) %*% train_dat %*% W
@@ -42,8 +42,10 @@ EV_PRESS_per_component <- function(c, res_loadings, train_dat, test_dat){
     pred[, j] <- TMinusVariableJ %*% P[j, ]
   }
   
+  print(dim(pred))
+  
   # calculate the PRESS for each number of components
-  comp_error <- sum((test_dat - pred)^2)
+  comp_error <- sum((test_dat - pred)^2) # does this work? since the dimensions of P are different each time
   
   print(W)
   print(sprintf('comp_error = %s', comp_error))
@@ -88,7 +90,7 @@ EV_run_folds <- function(i, dat, folds){
 }
 
 # create a function to run eigenvector cross-validation 
-EigenVectorCV <- function(dat, type, nrFolds=10){
+EigenVectorCV <- function(dat, nrFolds=10){
   
   folds <- rep_len(1:nrFolds, nrow(dat))
   
@@ -110,7 +112,7 @@ EigenVectorCV <- function(dat, type, nrFolds=10){
 RUN_PC_SELECT <- function(dat, nrFolds){
   
   tic('PC cross-validation')
-  res_CV <- EigenVectorCV(dat = dat, type = 'pca', nrFolds = nrFolds)
+  res_CV <- EigenVectorCV(dat = dat, nrFolds = nrFolds)
   toc()
   
   return(list(PCA_CV = res_CV[1], SPCA_CV = res_CV[2]))

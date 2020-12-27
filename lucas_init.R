@@ -32,16 +32,15 @@ cl <- makeCluster(cores[1]-1)
 clusterExport(cl, 'spca')
 
 # set up the simulation parameters
-MC_reps <- 20
+MC_reps <- 1
 num_comp_seq <- c(3)
-num_var_seq <- c(7)
-variance_of_comps <- rep(0.5, length(num_comp_seq))
+num_var_seq <- c(6)
 error_seq <- c(0.01, 0.05, 0.10)
 n_seq <- c(25, 100, 250)
-nrFolds <- 10
+nrFolds <- 5
 
 # define a function to run a single simulation
-run_simulation <- function(sim_param_combs, variance_of_comps, nrFolds){
+run_simulation <- function(sim_param_combs, nrFolds){
   
   # extract the simulation parameters from sim_param_combs
   num_mc <- sim_param_combs[1]
@@ -54,7 +53,7 @@ run_simulation <- function(sim_param_combs, variance_of_comps, nrFolds){
   set.seed(num_mc)
   
   # generate the simulation data
-  res_var <- makeVariance(varianceOfComps = variance_of_comps, p = p, error = e)
+  res_var <- makeVariance(varianceOfComps = rep(0.5, c), p = p, error = e)
   X <- makeDat(n = n, p = p, ncomp = c, variances = res_var)$X
   
   # run the component selection techniques
@@ -88,7 +87,6 @@ sim_param_combs <- expand.grid(seq(1, MC_reps),
 results <- apply(X = sim_param_combs,
                  MARGIN = 1,
                  FUN = run_simulation,
-                 variance_of_comps = variance_of_comps,
                  nrFolds = nrFolds)
 toc()
 

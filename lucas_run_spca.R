@@ -33,11 +33,11 @@ spca_cv_1 <- function(param_combs, dat, nfolds, ridge, lasso){
   return(c(param_combs[1], param_combs[2], param_combs[3], comb_MSE))
 }
 
-RUN_SPCA_CV <- function(dat, nfolds=10, ridge_seq=lseq(), lasso_seq=lseq()){
+RUN_SPCA_CV <- function(dat, nfolds=3, ridge_seq=lseq(), lasso_seq=lseq()){
 
   param_combs <- expand.grid(seq(1, nfolds), ridge_seq, lasso_seq)
   
-  res_spca_cv <- parApply(cl=cl, X = param_combs, MARGIN = 1, FUN = spca_cv_1, dat = dat, nfolds=nfolds)
+  res_spca_cv <- parApply(cl = cl, X = param_combs, MARGIN = 1, FUN = spca_cv_1, dat = dat, nfolds=nfolds)
   
   df_res_spca_cv <- data.frame(fold=res_spca_cv[1,],ridge=res_spca_cv[2,],lasso=res_spca_cv[3,],comb_MSE=res_spca_cv[4,])
   
