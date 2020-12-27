@@ -55,8 +55,6 @@ EV_run_folds <- function(i, dat, folds, type){
 # create a function to run eigenvector cross-validation 
 EigenVectorCV <- function(dat, type, nrFolds=10){
   
-  # create a matrix to store the PRESS of a component per fold
-  cvError <- matrix(NA, nrow=nrFolds, ncol=min(dim(dat))-1)
   folds <- rep_len(1:nrFolds, nrow(dat))
   
   folds_vector <- 1:nrFolds
@@ -66,11 +64,13 @@ EigenVectorCV <- function(dat, type, nrFolds=10){
                               folds = folds, 
                               type = type)
   
-  PRESS_per_number_of_component <- matrix(colSums(cvError), nrow=1, ncol=ncol(cvError))
+  folds_comp_error_matrix <- matrix(unlist(folds_comp_errors), ncol = min(dim(dat))-1, nrow = nrFolds)
   
-  GlobalMin <- which.min(PRESS_per_number_of_component)
+  PRESS_per_number_of_components <- colSums(folds_comp_error_matrix)
   
-  return(GlobalMin)
+  global_min <- which.min(PRESS_per_number_of_components)
+  
+  return(global_min)
 }
 
 RUN_PC_SELECT <- function(dat, nrFolds){
