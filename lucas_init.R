@@ -32,13 +32,13 @@ cl <- makeCluster(cores[1]-1)
 clusterExport(cl, 'spca')
 
 # set up the simulation parameters
-MC_reps <- 1
+MC_reps <- 20
 num_comp_seq <- c(3)
-num_var_seq <- c(5)
+num_var_seq <- c(7)
 variance_of_comps <- rep(0.5, length(num_comp_seq))
 error_seq <- c(0.01, 0.05, 0.10)
 n_seq <- c(25, 100, 250)
-nrFolds <- 3
+nrFolds <- 10
 
 # define a function to run a single simulation
 run_simulation <- function(sim_param_combs, variance_of_comps, nrFolds){
@@ -92,21 +92,27 @@ results <- apply(X = sim_param_combs,
                  nrFolds = nrFolds)
 toc()
 
-# close the connections to the cluster
+# close the connections to the cluster 
 stopCluster(cl)
 
+# unlist to be able to convert to data frame
 results_matrix <- t(matrix(unlist(results),
                          nrow = 7,
                          ncol = nrow(sim_param_combs)))
 
 # convert the results to a data frame for increased readability
 results_df <- data.frame(MC = results_matrix[,1],
-                         p = results_matrix[,2],
-                         error = results_matrix[,3],
-                         n = results_matrix[,4],
-                         ncomp = results_matrix[,5],
-                         pca_ncomp = results_matrix[,6],
-                         spca_ncomp = results_matrix[,7])
+                      p = results_matrix[,2],
+                      error = results_matrix[,3],
+                      n = results_matrix[,4],
+                      ncomp = results_matrix[,5],
+                      pca_ncomp = results_matrix[,6],
+                      spca_ncomp = results_matrix[,7])
+
+results_df$pca_correct <- results_df$ncomp == results_df$pca_ncomp
+results_df$spca_correct <- results_df$ncomp == results_df$spca_ncomp
+
+results_df %>% group_by(error, n) %>% summarise(sum(pca_correct)/MC_reps*100, sum(spca_correct)/MC_reps*100)
 
 # # next step is to create plots?
 # # or to look at if the current CV method is correct

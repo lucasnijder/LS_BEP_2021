@@ -1,3 +1,5 @@
+# extracts the corresponding results. Was created because in the results of EV_run_folds
+# --> the pca and spca results are in nested lists
 select_model_result <- function(x, type){
   if(type == 'pca'){
     return(x$pca_comp_errors)
@@ -7,6 +9,8 @@ select_model_result <- function(x, type){
   }
 }
 
+# a function that extracts the number of components for the specified model type. Was created because 
+# --> in the results of EV_run_folds the pca and spca results are in nested lists
 extract_num_comps <- function(folds_comp_errors, type, dat){
   folds_comp_errors <- lapply(X = folds_comp_errors, FUN = select_model_result, type = type)
   
@@ -19,7 +23,7 @@ extract_num_comps <- function(folds_comp_errors, type, dat){
   return(global_min)
 }
 
-# create a function which checks which number of components has the lowest PRESS
+# is called for each component and returns the PRESS for that component
 EV_PRESS_per_component <- function(c, res_loadings, train_dat, test_dat){
   
   # W represents the loadings of the (S)PCA model
@@ -33,7 +37,7 @@ EV_PRESS_per_component <- function(c, res_loadings, train_dat, test_dat){
   # predict each value x based on the test set minus x as suggested by Bro et al. (2008)
   pred <- matrix(NA, nrow(test_dat), ncol(test_dat))
   
-  for(j in 1:ncol(train_dat)){
+  for(j in 1:ncol(test_dat)){
     TMinusVariableJ <- test_dat[, -j] %*% W[-j, ] # ----------- look at this again! ---------
     pred[, j] <- TMinusVariableJ %*% P[j, ]
   }
@@ -41,10 +45,13 @@ EV_PRESS_per_component <- function(c, res_loadings, train_dat, test_dat){
   # calculate the PRESS for each number of components
   comp_error <- sum((test_dat - pred)^2)
   
+  print(W)
+  print(sprintf('comp_error = %s', comp_error))
+  
   return(comp_error)
 }
 
-# create a function to run all folds
+# is called for each fold and returns a list of PRESS scores for each number of components (for both PCA and SPCA)
 EV_run_folds <- function(i, dat, folds){
   fold <- which(folds == i)
   
@@ -66,12 +73,16 @@ EV_run_folds <- function(i, dat, folds){
                         train_dat = train_dat,
                         test_dat = test_dat)
   
+  print(unlist(pca_comp_errors))
+  
   spca_components_vector <- 1:ncol(spca_loadings)
   spca_comp_errors <- lapply(X = spca_components_vector, 
                                   FUN = EV_PRESS_per_component, 
                                   res_loadings = spca_loadings,
                                   train_dat = train_dat,
                                   test_dat = test_dat)
+  
+  print(unlist(spca_comp_errors))
   
   return(list(pca_comp_errors = pca_comp_errors, spca_comp_errors = spca_comp_errors))
 }
@@ -93,7 +104,7 @@ EigenVectorCV <- function(dat, type, nrFolds=10){
   print(pca_global_min)
   print(spca_global_min)
   
-  return(list(pca_global_min = pca_global_min, spca_global_min))
+  return(list(pca_global_min = pca_global_min, spca_global_min = spca_global_min))
 }
 
 RUN_PC_SELECT <- function(dat, nrFolds){
