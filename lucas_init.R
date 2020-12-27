@@ -65,7 +65,7 @@ run_simulation <- function(sim_param_combs, variance_of_comps, nrFolds){
   res_comp_spca <- final_res$SPCA_CV
   
   # return a list containing the results
-  return(c(num_mc = num_mc,
+  return(list(num_mc = num_mc,
            p = p,
            error = e,
            n = n,
@@ -95,15 +95,18 @@ toc()
 # close the connections to the cluster
 stopCluster(cl)
 
-# convert the results to a data frame for readability
-data.frame(MC = results[1,],
-           p = results[2,],
-           error = results[3,],
-           n = results[4,],
-           ncomp = results[5,],
-           pca_ncomp = results[6,],
-           spca_ncomp = results[7,])
+results_matrix <- t(matrix(unlist(results),
+                         nrow = 7,
+                         ncol = nrow(sim_param_combs)))
 
+# convert the results to a data frame for increased readability
+results_df <- data.frame(MC = results_matrix[,1],
+                         p = results_matrix[,2],
+                         error = results_matrix[,3],
+                         n = results_matrix[,4],
+                         ncomp = results_matrix[,5],
+                         pca_ncomp = results_matrix[,6],
+                         spca_ncomp = results_matrix[,7])
 
 # # next step is to create plots?
 # # or to look at if the current CV method is correct

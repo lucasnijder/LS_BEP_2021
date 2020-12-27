@@ -1,3 +1,24 @@
+select_model_result <- function(x, type){
+  if(type == 'pca'){
+    return(x$pca_comp_errors)
+  }
+  if(type == 'spca'){
+    return(x$spca_comp_errors)
+  }
+}
+
+extract_num_comps <- function(folds_comp_errors, type, dat){
+  folds_comp_errors <- lapply(X = folds_comp_errors, FUN = select_model_result, type = type)
+  
+  folds_comp_error_matrix <- matrix(unlist(folds_comp_errors), ncol = min(dim(dat))-1, nrow = nrFolds)
+  
+  PRESS_per_number_of_components <- colSums(folds_comp_error_matrix)
+  
+  global_min = which.min(PRESS_per_number_of_components)
+  
+  return(global_min)
+}
+
 # create a function which checks which number of components has the lowest PRESS
 EV_PRESS_per_component <- function(c, res_loadings, train_dat, test_dat){
   
@@ -24,32 +45,35 @@ EV_PRESS_per_component <- function(c, res_loadings, train_dat, test_dat){
 }
 
 # create a function to run all folds
-EV_run_folds <- function(i, dat, folds, type){
+EV_run_folds <- function(i, dat, folds){
   fold <- which(folds == i)
   
   # split up the data into train and test sets
   train_dat <- dat[-fold, ]
   test_dat <- dat[fold,]
   
-  if(type == 'pca'){
-    res <- RUN_PCA(train_dat)
-    # extract PCA loadings
-    res_loadings <- unlist(res$rotation)    }
+  res_pca <- RUN_PCA(train_dat)
+  pca_loadings <- unlist(res_pca$rotation)
   
-  if(type == 'spca'){
-    # run cross-validation to get the optimal L1 and L2 parameters and return best performing SPCA model
-    res <- RUN_SPCA_CV(train_dat)
-    # extract SPCA loadings
-    res_loadings <- unlist(res$spca_loadings)
-  }
+  # run cross-validation to get the optimal L1 and L2 parameters and return best performing SPCA model
+  res_spca <- RUN_SPCA_CV(train_dat)
+  spca_loadings <- unlist(res_spca$spca_loadings)
   
-  components_vector <- 1:ncol(res_loadings)
-  comp_errors <- lapply(X = components_vector, 
+  pca_components_vector <- 1:ncol(pca_loadings)
+  pca_comp_errors <- lapply(X = pca_components_vector, 
+                        FUN = EV_PRESS_per_component, 
+                        res_loadings = pca_loadings,
+                        train_dat = train_dat,
+                        test_dat = test_dat)
+  
+  spca_components_vector <- 1:ncol(spca_loadings)
+  spca_comp_errors <- lapply(X = spca_components_vector, 
                                   FUN = EV_PRESS_per_component, 
-                                  res_loadings = res_loadings,
+                                  res_loadings = spca_loadings,
                                   train_dat = train_dat,
                                   test_dat = test_dat)
-  return(comp_errors)
+  
+  return(list(pca_comp_errors = pca_comp_errors, spca_comp_errors = spca_comp_errors))
 }
 
 # create a function to run eigenvector cross-validation 
@@ -61,27 +85,22 @@ EigenVectorCV <- function(dat, type, nrFolds=10){
   folds_comp_errors <- lapply(X = folds_vector, 
                               FUN = EV_run_folds, 
                               dat = dat, 
-                              folds = folds, 
-                              type = type)
+                              folds = folds)
   
-  folds_comp_error_matrix <- matrix(unlist(folds_comp_errors), ncol = min(dim(dat))-1, nrow = nrFolds)
+  pca_global_min = extract_num_comps(folds_comp_errors, 'pca', dat)
+  spca_global_min = extract_num_comps(folds_comp_errors, 'spca', dat)
+    
+  print(pca_global_min)
+  print(spca_global_min)
   
-  PRESS_per_number_of_components <- colSums(folds_comp_error_matrix)
-  
-  global_min <- which.min(PRESS_per_number_of_components)
-  
-  return(global_min)
+  return(list(pca_global_min = pca_global_min, spca_global_min))
 }
 
 RUN_PC_SELECT <- function(dat, nrFolds){
   
-  # Cross-validation
-  tic('PCA PC cross-validation')
-  pca_res_CV <- EigenVectorCV(dat = dat, type = 'pca', nrFolds = nrFolds)
-  toc()
-  tic('SPCA PC cross-validation')
-  spca_res_CV <- EigenVectorCV(dat = dat, type = 'spca', nrFolds = nrFolds)
+  tic('PC cross-validation')
+  res_CV <- EigenVectorCV(dat = dat, type = 'pca', nrFolds = nrFolds)
   toc()
   
-  return(list(PCA_CV = pca_res_CV, SPCA_CV = spca_res_CV))
+  return(list(PCA_CV = res_CV[1], SPCA_CV = res_CV[2]))
 }
