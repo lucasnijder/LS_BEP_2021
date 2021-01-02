@@ -33,7 +33,7 @@ spca_cv_1 <- function(param_combs, dat, nfolds, ridge, lasso){
   return(c(param_combs[1], param_combs[2], param_combs[3], comb_MSE))
 }
 
-RUN_SPCA_CV <- function(dat, nfolds=1, ridge_seq=lseq(), lasso_seq=lseq()){
+RUN_SPCA_CV <- function(dat, nfolds=3, ridge_seq=lseq(), lasso_seq=lseq()){
 
   param_combs <- expand.grid(seq(1, nfolds), ridge_seq, lasso_seq)
   
@@ -50,5 +50,5 @@ RUN_SPCA_CV <- function(dat, nfolds=1, ridge_seq=lseq(), lasso_seq=lseq()){
   best_spca_res <- spca(dat, k =  min(dim(dat))-1, alpha = row_min$ridge, beta = row_min$lasso)
   best_spca_loadings <- best_spca_res$loadings
 
-  return(list(MSE_matrix = df_res_spca_cv, L1 = row_min$ridge, L2 = row_min$lasso, mse = row_min$comb_MSE, spca_loadings = best_spca_loadings))
+  return(list(MSE_matrix = df_res_spca_cv, L1 = row_min$ridge, L2 = row_min$lasso, mse = row_min$comb_MSE, best_spca = best_spca_res))
 }
