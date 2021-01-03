@@ -8,6 +8,15 @@ library(MASS)
 library(ggpubr)
 library(grid)
 library(sjmisc)
+library(nFactors)
+library(ggthemes)
+
+source('PA_method.R')
+source('OC_method.R')
+source('KG_method.R')
+source('AF_method.R')
+source('deun_makeData.R')
+source('lucas_run_spca.R')
 
 cl <- makeCluster(7)
 clusterExport(cl, 'spca')
@@ -17,7 +26,7 @@ c_seq <- 3
 p_seq <- c(10, 20)
 error_seq <- c(0.01,0.1,0.15)
 
-num_mc <- 100
+num_mc <- 15
 
 combs <- expand.grid(n_seq, c_seq, p_seq, error_seq)
 
@@ -54,6 +63,8 @@ run_sim <- function(comb, type){
     OC_predicted_comps <- OC_method(spca_eigenvalues)
     AF_predicted_comps <- AF_method(spca_eigenvalues)
     KG_predicted_comps <- KG_method(spca_eigenvalues)
+    
+    stopCluster(cl=cl)
   }
   
   return(list(n, p, c, error, PA_predicted_comps, OC_predicted_comps, AF_predicted_comps, KG_predicted_comps))
@@ -80,20 +91,22 @@ Process_res <- function(type, pred_comps, res){
   }
   
   # if more techniques are added, change 4 to the total number of techniques
-  pred_comps <- cbind(pred_comps[,seq(s, ncol(pred_comps), 4)])
+  pred_comps <- pred_comps[,seq(s, ncol(pred_comps), 4)]
   
   percentage_correct <- rowSums(pred_comps == res[,2])*100/num_mc
   
   res <- cbind(res, percentage_correct)
   colnames(res)[4+s] <- sprintf('%s_percentage_correct', type)
-
+  
+  type_pred_comps <- matrix(0, nrow = 18, ncol = 9)
+  
   for(i in 0:8){
-    pred_comps <- row_count(pred_comps, count = i, var = sprintf("PC%s",i))
+    type_pred_comps[,(i+1)] <- rowSums(pred_comps == i)
   }
   
-  pred_comps <- data.frame(pred_comps[,-(1:num_mc)])
+  colnames(type_pred_comps) <- c('PC0','PC1','PC2','PC3','PC4','PC5','PC6','PC7','PC8')
   
-  return(list(pred_comps, res))
+  return(list(type_pred_comps, res))
 }
 
 # ----------------------------------- #
@@ -156,7 +169,9 @@ Plot_comp_predictions <- function(pred_comps, type, error){
   p_list <-  vector('list', 6)
   for(a in 0:5){
     bar_dat <- melt(pred_comps[i+a,])
-    bar_dat <- bar_dat %>% mutate(correct_comp = ifelse(value == bar_dat[4,2], T, F))
+    bar_dat <- cbind(variable = rownames(bar_dat), bar_dat)
+    bar_dat <- bar_dat %>% mutate(correct_comp = ifelse(variable == 'PC3', T, F)) # value == bar_dat[4,2]
+    bar_dat <- bar_dat %>% mutate(value = value*100/num_mc)
     
      p <- ggplot(data=bar_dat, aes(x=variable, y=value)) +
       geom_bar(stat="identity", aes(fill = correct_comp))+
@@ -167,10 +182,6 @@ Plot_comp_predictions <- function(pred_comps, type, error){
             axis.title.y = element_text(size=8),
             plot.margin = unit(c(1,1,1,1), "lines"),
             legend.position = 'none')
-    
-    correct_comps_df <- data.frame(PC3=pred_comps$PC3)
-    
-    p
     
     p_list[[a+1]] <- p
   }
@@ -193,6 +204,11 @@ Plot_comp_predictions <- function(pred_comps, type, error){
             hjust = 0,
             vjust = 1))
 }
+
+print(sprintf("PA = %s, OC = %s, AF = %s, KG = %s", round(mean(res$PA_percentage_correct),2), 
+              round(mean(res$OC_percentage_correct),2),
+              round(mean(res$AF_percentage_correct),2),
+              round(mean(res$KG_percentage_correct),2)))
 
 count = 0
 for(type in list(PA_pred_comps, OC_pred_comps, AF_pred_comps, KG_pred_comps)){
@@ -225,11 +241,5 @@ for(type in list(PA_pred_comps, OC_pred_comps, AF_pred_comps, KG_pred_comps)){
   count <- count + 1
 }
 
-print(sprintf("PA = %s, OC = %s, AF = %s, KG = %s", round(mean(res$PA_percentage_correct),2), 
-              round(mean(res$OC_percentage_correct),2),
-              round(mean(res$AF_percentage_correct),2),
-              round(mean(res$KG_percentage_correct),2)))
-
-stopCluster(cl=cl)
 
 toc()
