@@ -1,4 +1,4 @@
-copy_of_function_estim_ncp <- function (X, ncp.min = 0, ncp.max = NULL, scale = TRUE, method = "GCV") 
+copy_of_function_estim_ncp_svd <- function (X, ncp.min = 0, ncp.max = NULL, scale = TRUE, method = "GCV") 
 {
   method <- tolower(method)
   pquali <- 0
@@ -26,9 +26,8 @@ copy_of_function_estim_ncp <- function (X, ncp.min = 0, ncp.max = NULL, scale = 
   if (ncp.min == 0) 
     crit = mean(X^2, na.rm = TRUE) * (n * p)/((p - pquali) * 
                                                 (n - 1))
-  rr <- svd(X) # removed ", nu = ncp.max, nv = ncp.max" ///// copy_of_function_spca
+  rr <- svd(X)
   print(summary(rr))
-  print(rr$u)
   for (q in max(ncp.min, 1):ncp.max) {
     if (q == max(ncp.min, 1)) {
       if (q == 1) 

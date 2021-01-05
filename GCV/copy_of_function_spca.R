@@ -78,23 +78,22 @@ copy_of_function_spca <- function (X, k = NULL, alpha = 1e-04, beta = 1e-04, cen
     }
     noi <- noi + 1
   }
-
-  # problem: find an U that is 41x10
   
-  spcaObj$u <- u
+  # u has to be changed to something else
+  spcaObj$u <- ( X %*% B %*% A ) /(n - 1)
   spcaObj$v <- svd_update$v
   spcaObj$d <- svd_update$d
   
-  # spcaObj$loadings <- B
-  # spcaObj$transform <- A
-  # spcaObj$scores <- X %*% B
-  # spcaObj$eigenvalues <- svd_update$d/(n - 1)
-  # spcaObj$objective <- obj
-  # spcaObj$sdev <- sqrt(spcaObj$eigenvalues)
-  # spcaObj$var <- sum(apply(Re(X), 2, stats::var))
-  # if (is.complex(X))
-  #   spcaObj$var <- Re(spcaObj$var + sum(apply(Im(X), 2,
-  #                                             stats::var)))
+  spcaObj$loadings <- B
+  spcaObj$transform <- A
+  spcaObj$scores <- X %*% B
+  spcaObj$eigenvalues <- svd_update$d/(n - 1)
+  spcaObj$objective <- obj
+  spcaObj$sdev <- sqrt(spcaObj$eigenvalues)
+  spcaObj$var <- sum(apply(Re(X), 2, stats::var))
+  if (is.complex(X))
+    spcaObj$var <- Re(spcaObj$var + sum(apply(Im(X), 2,
+                                              stats::var)))
   class(spcaObj) <- "copy_of_function_spca"
   return(spcaObj)
 }

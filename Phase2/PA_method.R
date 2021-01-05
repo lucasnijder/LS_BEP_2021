@@ -1,6 +1,6 @@
 
 
-ParallelAnalysis <- function(dat, model_eigenval, type, n_datasets = 20){
+PA_method <- function(dat, model_eigenval, type, n_datasets = 20){
   n_real <- nrow(dat)
   p_real <- ncol(dat)
   random_ev_matrix <- matrix(NA, nrow = n_datasets, ncol = min(dim(dat)))

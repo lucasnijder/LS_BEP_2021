@@ -12,9 +12,10 @@ library(nFactors)
 library(ggthemes)
 
 source('PA_method.R')
+source('AF_method.R')
 source('OC_method.R')
 source('KG_method.R')
-source('AF_method.R')
+source('CV_method.R')
 source('deun_makeData.R')
 source('lucas_run_spca.R')
 
@@ -26,7 +27,8 @@ c_seq <- 3
 p_seq <- c(10, 20)
 error_seq <- c(0.01,0.1,0.15)
 
-num_mc <- 15
+num_mc <- 50
+run_type <- 'pca'
 
 combs <- expand.grid(n_seq, c_seq, p_seq, error_seq)
 
@@ -49,25 +51,38 @@ run_sim <- function(comb, type){
     pca_res <- prcomp(dat)
     pca_eigenvalues <- pca_res$sdev^2
     
-    PA_predicted_comps <- ParallelAnalysis(dat, pca_eigenvalues, 'pca')
+    # eigenvalue pattern methods
+    PA_predicted_comps <- PA_method(dat, pca_eigenvalues, 'pca')
     OC_predicted_comps <- OC_method(pca_eigenvalues)
     AF_predicted_comps <- AF_method(pca_eigenvalues)
     KG_predicted_comps <- KG_method(pca_eigenvalues)
+    
+    # structural model methods
+    CV_predicted_comps <- CV_method(dat, 'pca')
   }
   
   if(type == 'spca'){
-    spca_res <- RUN_SPCA_CV(dat)[[5]]
+    res <- RUN_SPCA_CV(dat)
+    spca_res <- res[[5]]
     spca_eigenvalues <- spca_res$eigenvalues
     
-    PA_predicted_comps <- ParallelAnalysis(dat, spca_eigenvalues, 'spca')
+    # eigenvalue pattern methods
+    PA_predicted_comps <- PA_method(dat, spca_eigenvalues, 'spca')
     OC_predicted_comps <- OC_method(spca_eigenvalues)
     AF_predicted_comps <- AF_method(spca_eigenvalues)
     KG_predicted_comps <- KG_method(spca_eigenvalues)
     
-    stopCluster(cl=cl)
+    print(res)
+    
+    # Because of the problem with the tuned parameters in the CV method we will use the default L1 and L2
+    L1 <- res[[2]]
+    L2 <- res[[3]]
+    
+    # structural model methods
+    CV_predicted_comps <- CV_method(dat, 'spca', L1=L1, L2=L2)
   }
   
-  return(list(n, p, c, error, PA_predicted_comps, OC_predicted_comps, AF_predicted_comps, KG_predicted_comps))
+  return(list(n, p, c, error, PA_predicted_comps, OC_predicted_comps, AF_predicted_comps, KG_predicted_comps, CV_predicted_comps))
 }
 
 # -------------------------------- #
@@ -90,12 +105,17 @@ Process_res <- function(type, pred_comps, res){
     s = 4
   }
   
-  # if more techniques are added, change 4 to the total number of techniques
-  pred_comps <- pred_comps[,seq(s, ncol(pred_comps), 4)]
+  if(type == 'CV'){
+    s = 5
+  }
+  
+  # if more techniques are added, change 5 to the total number of techniques
+  pred_comps <- pred_comps[,seq(s, ncol(pred_comps), 5)]
   
   percentage_correct <- rowSums(pred_comps == res[,2])*100/num_mc
   
   res <- cbind(res, percentage_correct)
+  # this 4 represents the 4 columns of parameters, so do not change if new techniques are added
   colnames(res)[4+s] <- sprintf('%s_percentage_correct', type)
   
   type_pred_comps <- matrix(0, nrow = 18, ncol = 9)
@@ -111,15 +131,15 @@ Process_res <- function(type, pred_comps, res){
 
 # ----------------------------------- #
 
-Run_MC <- function(num_mc=10){
+Run_MC <- function(num_mc){
   res <- combs
   for(i in 1:num_mc){
     
-    set.seed(i)
+    set.seed(i+100)
     
-    sim_res <- apply(combs, 1, run_sim, type = 'pca')
+    sim_res <- apply(combs, 1, run_sim, type = run_type)
     
-    predicted_comps <- t(matrix(unlist(sim_res), nrow=8))[,5:8]
+    predicted_comps <- t(matrix(unlist(sim_res), nrow=9))[,5:9]
     
     res <- cbind(res, predicted_comps)
   }
@@ -143,7 +163,11 @@ Run_MC <- function(num_mc=10){
   KG_pred_comps <- run_KG[[1]]
   res <- run_KG[[2]]
   
-  return(list(res, PA_pred_comps, OC_pred_comps, AF_pred_comps, KG_pred_comps))
+  run_CV <- Process_res('CV', pred_comps, res)
+  CV_pred_comps <- run_CV[[1]]
+  res <- run_CV[[2]]
+  
+  return(list(res, PA_pred_comps, OC_pred_comps, AF_pred_comps, KG_pred_comps, CV_pred_comps))
 }
 
 # ---------------------------------- #
@@ -154,6 +178,9 @@ PA_pred_comps <- res_mc[[2]]
 OC_pred_comps <- res_mc[[3]]
 AF_pred_comps <- res_mc[[4]]
 KG_pred_comps <- res_mc[[5]]
+CV_pred_comps <- res_mc[[6]]
+
+stopCluster(cl=cl)
 
 Plot_comp_predictions <- function(pred_comps, type, error){
   if(error == 0.01){
@@ -175,7 +202,7 @@ Plot_comp_predictions <- function(pred_comps, type, error){
     
      p <- ggplot(data=bar_dat, aes(x=variable, y=value)) +
       geom_bar(stat="identity", aes(fill = correct_comp))+
-      scale_fill_manual(values = c('gray30', 'green')) + 
+      scale_fill_manual(values = c('coral1', 'cyan3')) + 
       xlab("number of PCs") + ylab("% of outcomes") + 
       ylim(0,100) +
       theme(axis.title.x = element_text(size=8),
@@ -205,13 +232,15 @@ Plot_comp_predictions <- function(pred_comps, type, error){
             vjust = 1))
 }
 
-print(sprintf("PA = %s, OC = %s, AF = %s, KG = %s", round(mean(res$PA_percentage_correct),2), 
+print(sprintf("PA = %s, OC = %s, AF = %s, KG = %s, CV = %s", 
+              round(mean(res$PA_percentage_correct),2), 
               round(mean(res$OC_percentage_correct),2),
               round(mean(res$AF_percentage_correct),2),
-              round(mean(res$KG_percentage_correct),2)))
+              round(mean(res$KG_percentage_correct),2),
+              round(mean(res$CV_percentage_correct),2)))
 
 count = 0
-for(type in list(PA_pred_comps, OC_pred_comps, AF_pred_comps, KG_pred_comps)){
+for(type in list(PA_pred_comps, OC_pred_comps, AF_pred_comps, KG_pred_comps, CV_pred_comps)){
   if(count == 0){
     type_str = 'PA'
   }
@@ -224,12 +253,15 @@ for(type in list(PA_pred_comps, OC_pred_comps, AF_pred_comps, KG_pred_comps)){
   if(count == 3){
     type_str = 'KG'
   }
+  if(count == 4){
+    type_str = 'CV'
+  }
   
   for(error in list(0.01,0.1,0.15)){
-    Plot_comp_predictions(type, 'PCA', error)
+    Plot_comp_predictions(type, toupper(run_type), error)
 
     ggsave(
-      sprintf(sprintf("%s_%s_%s.png", 'PCA', type_str, error)),
+      sprintf(sprintf("%s_%s_%s.png", toupper(run_type), type_str, error)),
       path = "C:/Users/20175878/Documents/bep_with_version_control/figs",
       scale = 1,
       width = 10, 
