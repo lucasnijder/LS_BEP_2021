@@ -18,8 +18,7 @@ Plot_per_error <- function(total_res, error){
     i <- 25
   }
   
-  print(total_res)
-  
+
   p_list <-  vector('list', 6)
   for(a in seq(0,12,2)){
     bar_dat <- melt(total_res[(i+a):(i+a+1),])
@@ -47,12 +46,12 @@ Plot_per_error <- function(total_res, error){
                    p_list[[4]],
                    p_list[[5]],
                    p_list[[6]],
-                   labels = c(sprintf("              A.   n = 25 and p = 10"),
-                              sprintf("              B.   n = 50 and p = 10"),
-                              sprintf("              C.   n = 100 and p = 10"),
-                              sprintf("              D.   n = 25 and p = 20"),
-                              sprintf("              E.   n = 50 and p = 20"),
-                              sprintf("              F.   n = 100 and p = 20")),
+                   labels = c("              A.   n = 25 and p = 10",
+                              "              B.   n = 50 and p = 10",
+                              "              C.   n = 100 and p = 10",
+                              "              D.   n = 25 and p = 20",
+                              "              E.   n = 50 and p = 20",
+                              "              F.   n = 100 and p = 20"),
                    ncol = 3, nrow = 2,
                    font.label = list(size = 10,
                                      color = "black"),
@@ -61,7 +60,7 @@ Plot_per_error <- function(total_res, error){
                    common.legend = T))
 }
 
-Plot_but_not_per_error <- function(total_res){
+Plot_but_not_per_n <- function(total_res){
 
   total_res <- total_res[,-11]
 
@@ -72,13 +71,13 @@ Plot_but_not_per_error <- function(total_res){
   total_res <- cbind(total_res, n)
   total_res <- cbind(total_res, error)
   
-  total_res <- total_res %>% group_by(n, p, type) %>% summarise(PC0=sum(PC0),PC1=sum(PC1),PC2=sum(PC2),
+  total_res <- total_res %>% group_by(error, p, type) %>% summarise(PC0=sum(PC0),PC1=sum(PC1),PC2=sum(PC2),
                                                          PC3=sum(PC3),PC4=sum(PC4),PC5=sum(PC5),
                                                          PC6=sum(PC6),PC7=sum(PC7),PC8=sum(PC8))
 
   p_list <-  vector('list', 6)
   for(a in seq(1,12,2)){
-    bar_dat <- melt(total_res[a:(a+1),], id.vars = c('type','n','p'))
+    bar_dat <- melt(total_res[a:(a+1),], id.vars = c('type','error','p'))
     
     bar_dat <- bar_dat %>% mutate(value = round((value*100)/(num_mc*3),2))
 
@@ -103,12 +102,12 @@ Plot_but_not_per_error <- function(total_res){
                    p_list[[4]],
                    p_list[[5]],
                    p_list[[6]],
-                   labels = c(sprintf("              A.   n = 25 and p = 10"),
-                              sprintf("              B.   n = 50 and p = 10"),
-                              sprintf("              C.   n = 100 and p = 10"),
-                              sprintf("              D.   n = 25 and p = 20"),
-                              sprintf("              E.   n = 50 and p = 20"),
-                              sprintf("              F.   n = 100 and p = 20")),
+                   labels = c("              A.   error = 1% and p = 10",
+                              "              B.   error = 10% and p = 10",
+                              "              C.   error = 15% and p = 10",
+                              "              D.   error = 1% and p = 20",
+                              "              E.   error = 10% and p = 20",
+                              "              F.   error = 15% and p = 20"),
                    ncol = 3, nrow = 2,
                    font.label = list(size = 10,
                                      color = "black"),
@@ -145,7 +144,7 @@ Plot_PCA_SPCA_res <- function(){
         limitsize = TRUE)
     }
     
-    Plot_but_not_per_error(total_res)
+    Plot_but_not_per_n(total_res)
     ggsave(
       sprintf(sprintf("%s_overall.png", type_str)),
       path = "C:/Users/20175878/Documents/bep_with_version_control/figs",
