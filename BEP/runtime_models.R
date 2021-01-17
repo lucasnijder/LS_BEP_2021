@@ -18,7 +18,7 @@ mbm <- microbenchmark("PCA" = prcomp(dat),
 autoplot(mbm, log = T) + theme_grey()
 
 ggsave(
-  "runtime.png",
+  "runtime_models.png",
   path = "C:/Users/20175878/Documents/bep_with_version_control/figs",
   scale = 1,
   dpi = 600,

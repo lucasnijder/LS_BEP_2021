@@ -64,9 +64,9 @@ Plot_but_not_per_n <- function(total_res){
 
   total_res <- total_res[,-11]
 
-  p <- rep(c(10,10,10,20,20,20),6)
-  n <- rep(c(25,50,100),12)
-  error <- rep(c(rep(0.01,6), rep(0.1,6), rep(0.15,6)),2)
+  p <- rep(c(10,10,10,20,20,20),3)
+  n <- rep(c(25,50,100),6)
+  error <- c(rep(0.01,6), rep(0.1,6), rep(0.15,6))
   total_res <- cbind(total_res, p)
   total_res <- cbind(total_res, n)
   total_res <- cbind(total_res, error)
@@ -74,6 +74,7 @@ Plot_but_not_per_n <- function(total_res){
   total_res <- total_res %>% group_by(error, p, type) %>% summarise(PC0=sum(PC0),PC1=sum(PC1),PC2=sum(PC2),
                                                          PC3=sum(PC3),PC4=sum(PC4),PC5=sum(PC5),
                                                          PC6=sum(PC6),PC7=sum(PC7),PC8=sum(PC8))
+  
 
   p_list <-  vector('list', 6)
   for(a in seq(1,12,2)){
@@ -97,17 +98,17 @@ Plot_but_not_per_n <- function(total_res){
   }
 
   return(ggarrange(p_list[[1]],
-                   p_list[[2]],
-                   p_list[[3]],
                    p_list[[4]],
                    p_list[[5]],
+                   p_list[[2]],
+                   p_list[[3]],
                    p_list[[6]],
-                   labels = c("              A.   error = 1% and p = 10",
-                              "              B.   error = 10% and p = 10",
-                              "              C.   error = 15% and p = 10",
-                              "              D.   error = 1% and p = 20",
-                              "              E.   error = 10% and p = 20",
-                              "              F.   error = 15% and p = 20"),
+                   labels = c("              A.   noise = 1% and p = 10",
+                              "              B.   noise = 10% and p = 10",
+                              "              C.   noise = 15% and p = 10",
+                              "              D.   noise = 1% and p = 20",
+                              "              E.   noise = 10% and p = 20",
+                              "              F.   noise = 15% and p = 20"),
                    ncol = 3, nrow = 2,
                    font.label = list(size = 10,
                                      color = "black"),
