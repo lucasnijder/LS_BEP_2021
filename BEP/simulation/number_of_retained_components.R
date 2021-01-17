@@ -151,7 +151,7 @@ Plot_PCA_SPCA_res <- function(){
       path = "C:/Users/20175878/Documents/bep_with_version_control/figs",
       scale = 1,
       width = 14,
-      height = 6,
+      height = 8,
       units = "in",
       dpi = 600,
       limitsize = TRUE)
