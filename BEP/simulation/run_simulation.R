@@ -7,7 +7,7 @@ c_seq <- 3
 p_seq <- c(10, 20)
 error_seq <- c(0.01,0.1,0.15)
 
-num_mc <- 2
+num_mc <- 50
 run_type <- 'pca'
 
 combs <- expand.grid(n_seq, c_seq, p_seq, error_seq)
@@ -158,18 +158,18 @@ AF_pred_comps <- res_mc[[4]]
 KG_pred_comps <- res_mc[[5]]
 CV_pred_comps <- res_mc[[6]]
 
-# write.table(res, sprintf('%s_res.csv',run_type), append = FALSE, sep = ",", dec = ".",
-#             row.names = FALSE, col.names = TRUE)
-# write.table(PA_pred_comps, sprintf('%s_PA_pred_comps.csv',run_type), append = FALSE, sep = ",", dec = ".",
-#             row.names = FALSE, col.names = TRUE)
-# write.table(OC_pred_comps, sprintf('%s_OC_pred_comps.csv',run_type), append = FALSE, sep = ",", dec = ".",
-#             row.names = FALSE, col.names = TRUE)
-# write.table(AF_pred_comps, sprintf('%s_AF_pred_comps.csv',run_type), append = FALSE, sep = ",", dec = ".",
-#             row.names = FALSE, col.names = TRUE)
-# write.table(KG_pred_comps, sprintf('%s_KG_pred_comps.csv',run_type), append = FALSE, sep = ",", dec = ".",
-#             row.names = FALSE, col.names = TRUE)
-# write.table(CV_pred_comps, sprintf('%s_CV_pred_comps.csv',run_type), append = FALSE, sep = ",", dec = ".",
-#             row.names = FALSE, col.names = TRUE)
+write.table(res, sprintf('%s_res.csv',run_type), append = FALSE, sep = ",", dec = ".",
+            row.names = FALSE, col.names = TRUE)
+write.table(PA_pred_comps, sprintf('%s_PA_pred_comps.csv',run_type), append = FALSE, sep = ",", dec = ".",
+            row.names = FALSE, col.names = TRUE)
+write.table(OC_pred_comps, sprintf('%s_OC_pred_comps.csv',run_type), append = FALSE, sep = ",", dec = ".",
+            row.names = FALSE, col.names = TRUE)
+write.table(AF_pred_comps, sprintf('%s_AF_pred_comps.csv',run_type), append = FALSE, sep = ",", dec = ".",
+            row.names = FALSE, col.names = TRUE)
+write.table(KG_pred_comps, sprintf('%s_KG_pred_comps.csv',run_type), append = FALSE, sep = ",", dec = ".",
+            row.names = FALSE, col.names = TRUE)
+write.table(CV_pred_comps, sprintf('%s_CV_pred_comps.csv',run_type), append = FALSE, sep = ",", dec = ".",
+            row.names = FALSE, col.names = TRUE)
 
 toc()
 
