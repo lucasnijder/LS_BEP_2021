@@ -17,4 +17,4 @@ The examples can be recreated by running the files in the "examples" folder.
 ----- RUN TIME PLOTS -----
 The run time plots can be recreated by running the files in the "run_time_plots" folder.
 
-For questions you can reach me via lucasnijder@gmail.com
+For questions you can reach me at lucasnijder@gmail.com
