@@ -1,5 +1,7 @@
 Dear reader,
 
+First of all, thank you for your interest in this study. 
+
 Before anything can be executed, you first have to run the file "setup.R". This file loads the required packages and functions from the other files. 
 
 ----- SIMULATION -----
