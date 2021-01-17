@@ -1,11 +1,3 @@
-source('PA_method.R')
-source('AF_method.R')
-source('OC_method.R')
-source('KG_method.R')
-source('CV_method.R')
-source('Schipper_Deun_make_data.R')
-source('SPCA_cv.R')
-
 library(microbenchmark)
 
 n <- 100
